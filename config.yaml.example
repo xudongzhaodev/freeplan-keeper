@@ -1,0 +1,9 @@
+mongodb:
+  enabled: true
+  uri: mongodb+srv://your-username:your-password@your-cluster.mongodb.net
+  database: your-database
+
+supabase:
+  enabled: true
+  url: https://your-project.supabase.co
+  api_key: your-supabase-api-key 
