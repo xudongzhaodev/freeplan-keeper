@@ -31,8 +31,9 @@ mongodb:
 
 supabase:
   enabled: true
-  url: your-supabase-project-url
-  api_key: your-supabase-api-key
+  url: postgresql://postgres.[YOUR-PROJECT-ID]@aws-0-eu-central-1.pooler.supabase.com:6543/postgres
+  db_password: your-database-password
+  keep_records_limit: 100  # number of records to keep in keep_alive_reserved table
 ```
 
 3. Build and run
@@ -59,8 +60,8 @@ To set up GitHub Actions:
    - `MONGODB_URI`: Your MongoDB connection string
    - `MONGODB_DATABASE`: Your database name
    - `SUPABASE_ENABLED`: Set to 'true' or 'false'
-   - `SUPABASE_URL`: Your Supabase project URL
-   - `SUPABASE_API_KEY`: Your Supabase API key
+   - `SUPABASE_URL`: Your Supabase database URL (PostgreSQL connection string)
+   - `SUPABASE_DB_PASSWORD`: Your Supabase database password
 
 3. The workflow will automatically:
    - Run every hour
@@ -92,8 +93,9 @@ schtasks /create /tn "ServiceKeeper" /tr "path\to\keeper.exe" /sc hourly
 
 - Supabase configuration:
   - `enabled`: Whether to activate Supabase checks
-  - `url`: Your Supabase project URL
-  - `api_key`: Your Supabase API key
+  - `url`: Your Supabase database URL (PostgreSQL connection string)
+  - `db_password`: Your Supabase database password
+  - `keep_records_limit`: Number of records to keep in keep_alive_reserved table (default: 100)
 
 ## Security Notes
 

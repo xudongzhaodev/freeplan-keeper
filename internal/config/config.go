@@ -16,9 +16,10 @@ type Config struct {
 	} `yaml:"mongodb"`
 	
 	Supabase struct {
-		Enabled bool   `yaml:"enabled"`
-		URL     string `yaml:"url"`
-		APIKey  string `yaml:"api_key"`
+		Enabled         bool   `yaml:"enabled"`
+		URL            string `yaml:"url"`
+		DBPassword     string `yaml:"db_password"`
+		KeepRecordLimit int    `yaml:"keep_records_limit"`
 	} `yaml:"supabase"`
 }
 
@@ -39,6 +40,11 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("failed to parse config file: %w", err)
 	}
 
+	// Set default values
+	if cfg.Supabase.KeepRecordLimit <= 0 {
+		cfg.Supabase.KeepRecordLimit = 100 // default to keeping 100 records
+	}
+
 	// Validate required fields for enabled services
 	if cfg.MongoDB.Enabled {
 		if cfg.MongoDB.URI == "" {
@@ -53,8 +59,8 @@ func Load() (*Config, error) {
 		if cfg.Supabase.URL == "" {
 			return nil, fmt.Errorf("supabase.url is required when supabase is enabled")
 		}
-		if cfg.Supabase.APIKey == "" {
-			return nil, fmt.Errorf("supabase.api_key is required when supabase is enabled")
+		if cfg.Supabase.DBPassword == "" {
+			return nil, fmt.Errorf("supabase.db_password is required when supabase is enabled")
 		}
 	}
 

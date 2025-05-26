@@ -30,7 +30,10 @@ func main() {
 
 	// Initialize Supabase keeper if enabled
 	if cfg.Supabase.Enabled {
-		supabaseKeeper := supabase.NewKeeper(cfg)
+		supabaseKeeper, err := supabase.NewKeeper(cfg)
+		if err != nil {
+			log.Fatalf("Failed to create Supabase keeper: %v", err)
+		}
 		manager.RegisterKeeper(supabaseKeeper)
 	}
 

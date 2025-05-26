@@ -5,5 +5,6 @@ mongodb:
 
 supabase:
   enabled: true
-  url: https://your-project.supabase.co
-  api_key: your-supabase-api-key 
+  url: postgresql://postgres.jvyokyxdxzuxologgljm@aws-0-eu-central-1.pooler.supabase.com:6543/postgres
+  db_password: "[YOUR-PASSWORD]"
+  keep_records_limit: 100  # number of records to keep in keep_alive_reserved table 
