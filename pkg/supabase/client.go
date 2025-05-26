@@ -3,55 +3,44 @@ package supabase
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Client struct {
-	pool            *pgxpool.Pool
+	conn            *pgx.Conn
 	keepRecordLimit int
+	hostname        string  // This is the global hostname from config
 }
 
 // NewClient creates a new Supabase client using the PostgreSQL connection
-func NewClient(url, apiKey string, keepRecordLimit int) (*Client, error) {
-	// Convert Supabase URL to PostgreSQL connection string
-	// Format: postgres://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT-REF].supabase.co:5432/postgres
-	// Remove https:// if present
-	dbURL := url
-	if len(dbURL) > 8 && dbURL[:8] == "https://" {
-		dbURL = dbURL[8:]
-	}
-	connStr := fmt.Sprintf("postgres://postgres:%s@db.%s:5432/postgres", apiKey, dbURL)
+func NewClient(host string, port int, database, username, password string, keepRecordLimit int, hostname string) (*Client, error) {
+	// Construct the connection string with sslmode=require
+	connStr := fmt.Sprintf("postgresql://%s:%s@%s:%d/%s?sslmode=require",
+		username,
+		password,
+		host,  // This is the Supabase host for connection
+		port,
+		database,
+	)
 
-	// Create a connection pool configuration
-	config, err := pgxpool.ParseConfig(connStr)
+	// Create the connection
+	conn, err := pgx.Connect(context.Background(), connStr)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse connection string: %w", err)
-	}
-
-	// Set some reasonable pool settings
-	config.MaxConns = 1 // We only need one connection for this use case
-	config.MinConns = 1
-	config.MaxConnLifetime = time.Hour
-	config.MaxConnIdleTime = 30 * time.Minute
-
-	// Create the connection pool
-	pool, err := pgxpool.NewWithConfig(context.Background(), config)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create connection pool: %w", err)
+		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
 
 	// Test the connection
-	if err := pool.Ping(context.Background()); err != nil {
-		pool.Close()
-		return nil, fmt.Errorf("failed to ping database: %w", err)
+	var version string
+	if err := conn.QueryRow(context.Background(), "SELECT version()").Scan(&version); err != nil {
+		conn.Close(context.Background())
+		return nil, fmt.Errorf("failed to query database: %w", err)
 	}
 
 	return &Client{
-		pool:            pool,
+		conn:            conn,
 		keepRecordLimit: keepRecordLimit,
+		hostname:        hostname,  // Store the global hostname
 	}, nil
 }
 
@@ -68,7 +57,7 @@ func (c *Client) Ping() error {
 		ping_details JSONB DEFAULT '{}'::jsonb
 	)`
 
-	if _, err := c.pool.Exec(ctx, createTableSQL); err != nil {
+	if _, err := c.conn.Exec(ctx, createTableSQL); err != nil {
 		return fmt.Errorf("failed to create keep_alive_reserved table: %w", err)
 	}
 
@@ -77,9 +66,9 @@ func (c *Client) Ping() error {
 	INSERT INTO keep_alive_reserved (ping_source, ping_details)
 	VALUES ($1, $2::jsonb)`
 
-	details := fmt.Sprintf(`{"host": "%s", "version": "1.0"}`, "freeplan-keeper")
+	details := fmt.Sprintf(`{"hostname": "%s", "version": "1.0"}`, c.hostname)
 	
-	if _, err := c.pool.Exec(ctx, insertSQL, "supabase-keeper", details); err != nil {
+	if _, err := c.conn.Exec(ctx, insertSQL, "supabase-keeper", details); err != nil {
 		return fmt.Errorf("failed to insert keep-alive record: %w", err)
 	}
 
@@ -92,7 +81,7 @@ func (c *Client) Ping() error {
 		LIMIT $1
 	)`
 
-	if _, err := c.pool.Exec(ctx, cleanupSQL, c.keepRecordLimit); err != nil {
+	if _, err := c.conn.Exec(ctx, cleanupSQL, c.keepRecordLimit); err != nil {
 		// Just log the error but don't fail the ping
 		fmt.Printf("Warning: failed to cleanup old records: %v\n", err)
 	}
@@ -100,10 +89,10 @@ func (c *Client) Ping() error {
 	return nil
 }
 
-// Close closes the database connection pool
+// Close closes the database connection
 func (c *Client) Close() error {
-	if c.pool != nil {
-		c.pool.Close()
+	if c.conn != nil {
+		return c.conn.Close(context.Background())
 	}
 	return nil
 } 

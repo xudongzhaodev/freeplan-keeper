@@ -9,6 +9,7 @@ import (
 
 // Config holds all configuration settings for the application
 type Config struct {
+	Hostname string `yaml:"hostname"`  // Global identifier for this keeper instance
 	MongoDB struct {
 		Enabled  bool   `yaml:"enabled"`
 		URI      string `yaml:"uri"`
@@ -17,8 +18,11 @@ type Config struct {
 	
 	Supabase struct {
 		Enabled         bool   `yaml:"enabled"`
-		URL            string `yaml:"url"`
-		DBPassword     string `yaml:"db_password"`
+		User           string `yaml:"user"`
+		Password       string `yaml:"password"`
+		Host           string `yaml:"host"`
+		Port           int    `yaml:"port"`
+		DBName         string `yaml:"dbname"`
 		KeepRecordLimit int    `yaml:"keep_records_limit"`
 	} `yaml:"supabase"`
 }
@@ -41,8 +45,14 @@ func Load() (*Config, error) {
 	}
 
 	// Set default values
+	if cfg.Hostname == "" {
+		cfg.Hostname = "freeplan-keeper" // default hostname identifier
+	}
 	if cfg.Supabase.KeepRecordLimit <= 0 {
 		cfg.Supabase.KeepRecordLimit = 100 // default to keeping 100 records
+	}
+	if cfg.Supabase.Port <= 0 {
+		cfg.Supabase.Port = 5432 // default port for Supabase Pooler
 	}
 
 	// Validate required fields for enabled services
@@ -56,11 +66,17 @@ func Load() (*Config, error) {
 	}
 
 	if cfg.Supabase.Enabled {
-		if cfg.Supabase.URL == "" {
-			return nil, fmt.Errorf("supabase.url is required when supabase is enabled")
+		if cfg.Supabase.Host == "" {
+			return nil, fmt.Errorf("supabase.host is required when supabase is enabled")
 		}
-		if cfg.Supabase.DBPassword == "" {
-			return nil, fmt.Errorf("supabase.db_password is required when supabase is enabled")
+		if cfg.Supabase.User == "" {
+			return nil, fmt.Errorf("supabase.user is required when supabase is enabled")
+		}
+		if cfg.Supabase.Password == "" {
+			return nil, fmt.Errorf("supabase.password is required when supabase is enabled")
+		}
+		if cfg.Supabase.DBName == "" {
+			return nil, fmt.Errorf("supabase.dbname is required when supabase is enabled")
 		}
 	}
 

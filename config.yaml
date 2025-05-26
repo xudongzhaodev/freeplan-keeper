@@ -1,10 +1,20 @@
+# mongodb:
+#   enabled: true
+#   uri: mongodb+srv://your-username:your-password@your-cluster.mongodb.net
+#   database: your-database
+
+hostname: "local-keeper"  # Global identifier for this keeper instance
+
 mongodb:
-  enabled: true
+  enabled: false  # Disable MongoDB since we're not using it
   uri: mongodb+srv://your-username:your-password@your-cluster.mongodb.net
   database: your-database
 
 supabase:
   enabled: true
-  url: postgresql://postgres.jvyokyxdxzuxologgljm@aws-0-eu-central-1.pooler.supabase.com:6543/postgres
-  db_password: "[YOUR-PASSWORD]"
+  user: postgres.jvyokyxdxzuxologgljm
+  password: "66350484%40Aa"
+  host: aws-0-eu-central-1.pooler.supabase.com
+  port: 5432
+  dbname: postgres
   keep_records_limit: 100  # number of records to keep in keep_alive_reserved table 
