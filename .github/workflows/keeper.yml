@@ -1,0 +1,49 @@
+name: Service Keeper
+
+on:
+  schedule:
+    - cron: '0 */1 * * *'  # Run every hour
+  workflow_dispatch:        # Allow manual trigger
+  push:
+    branches: [ main ]      # Run on push to main branch
+    paths-ignore:           # Don't run on these files
+      - '**.md'
+      - 'LICENSE'
+      - '.gitignore'
+
+jobs:
+  build-and-run:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+        cache: true
+    
+    - name: Build
+      run: |
+        go build -v -o keeper ./cmd/keeper
+        
+    - name: Generate config from secrets
+      run: |
+        cat > config.yaml << EOF
+        mongodb:
+          enabled: ${{ secrets.MONGODB_ENABLED == 'true' }}
+          uri: ${{ secrets.MONGODB_URI }}
+          database: ${{ secrets.MONGODB_DATABASE }}
+        supabase:
+          enabled: ${{ secrets.SUPABASE_ENABLED == 'true' }}
+          url: ${{ secrets.SUPABASE_URL }}
+          api_key: ${{ secrets.SUPABASE_API_KEY }}
+        EOF
+      
+    - name: Run keeper
+      run: ./keeper
+      
+    - name: Clean up config
+      if: always()
+      run: rm -f config.yaml 
