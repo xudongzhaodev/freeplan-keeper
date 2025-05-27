@@ -19,11 +19,7 @@ type Config struct {
 	
 	Supabase struct {
 		Enabled         bool   `yaml:"enabled"`
-		User           string `yaml:"user"`
-		Password       string `yaml:"password"`
-		Host           string `yaml:"host"`
-		Port           int    `yaml:"port"`
-		DBName         string `yaml:"dbname"`
+		URI            string `yaml:"uri"`
 		KeepRecordLimit int    `yaml:"keep_records_limit"`
 	} `yaml:"supabase"`
 }
@@ -55,9 +51,6 @@ func Load() (*Config, error) {
 	if cfg.Supabase.KeepRecordLimit <= 0 {
 		cfg.Supabase.KeepRecordLimit = 100 // default to keeping 100 records
 	}
-	if cfg.Supabase.Port <= 0 {
-		cfg.Supabase.Port = 5432 // default port for Supabase Pooler
-	}
 
 	// Validate required fields for enabled services
 	if cfg.MongoDB.Enabled {
@@ -70,17 +63,8 @@ func Load() (*Config, error) {
 	}
 
 	if cfg.Supabase.Enabled {
-		if cfg.Supabase.Host == "" {
-			return nil, fmt.Errorf("supabase.host is required when supabase is enabled")
-		}
-		if cfg.Supabase.User == "" {
-			return nil, fmt.Errorf("supabase.user is required when supabase is enabled")
-		}
-		if cfg.Supabase.Password == "" {
-			return nil, fmt.Errorf("supabase.password is required when supabase is enabled")
-		}
-		if cfg.Supabase.DBName == "" {
-			return nil, fmt.Errorf("supabase.dbname is required when supabase is enabled")
+		if cfg.Supabase.URI == "" {
+			return nil, fmt.Errorf("supabase.uri is required when supabase is enabled")
 		}
 	}
 

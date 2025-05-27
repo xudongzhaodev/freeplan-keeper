@@ -1,0 +1,13 @@
+# Global identifier for this keeper instance
+hostname: "local-keeper"
+
+mongodb:
+  enabled: false  # Set to true to enable MongoDB keeper
+  uri: "mongodb+srv://<username>:<password>@<cluster>.mongodb.net/?retryWrites=true&w=majority"
+  database: "keeper"  # The database to store keep-alive records
+  keep_records_limit: 100  # Number of records to keep in keep_alive_reserved collection
+
+supabase:
+  enabled: true  # Set to true to enable Supabase keeper
+  uri: "postgresql://<user>:<password>@<host>:<port>/<dbname>"  # Get this from Supabase connection string
+  keep_records_limit: 100  # Number of records to keep in keep_alive_reserved table 

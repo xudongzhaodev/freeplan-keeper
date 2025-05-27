@@ -19,11 +19,7 @@ func NewKeeper(cfg *config.Config) (*Keeper, error) {
 	}
 
 	client, err := supabase.NewClient(
-		cfg.Supabase.Host,
-		cfg.Supabase.Port,
-		cfg.Supabase.DBName,
-		cfg.Supabase.User,
-		cfg.Supabase.Password,
+		cfg.Supabase.URI,
 		cfg.Supabase.KeepRecordLimit,
 		cfg.Hostname,
 	)

@@ -1,108 +1,108 @@
-# freeplan-keeper
-🛡️ Your free-tier service guardian — keeps services like RabbitMQ (CloudAMQP), PostgreSQL (Supabase), Redis (Upstash), and MongoDB Atlas active by sending regular heartbeat signals to prevent suspension or deletion due to inactivity.
+# Freeplan Keeper
+
+A service keeper application designed to prevent free-tier services from being suspended due to inactivity. Currently supports:
+- MongoDB Atlas
+- Supabase
 
 ## Features
 
-- Automated heartbeat signals to keep your free-tier services active
-- Currently supports:
-  - MongoDB Atlas
-  - Supabase
-  - More services coming soon...
-- Service-specific enable/disable switches
-- Multiple deployment options (local, cron, GitHub Actions)
+- Configurable ping intervals
+- Record cleanup with configurable limits
+- Support for multiple services
+- Detailed ping records with timestamp and source tracking
+- Global instance identification
 
-## Setup
+## Installation
 
-### Local Setup
-
-1. Clone the repository
+1. Clone the repository:
 ```bash
 git clone https://github.com/xudongzhaodev/freeplan-keeper.git
 cd freeplan-keeper
 ```
 
-2. Configure your services
-Copy `config.yaml.example` to `config.yaml` and update with your service credentials:
-```yaml
-mongodb:
-  enabled: true
-  uri: your-mongodb-connection-string
-  database: your-database-name
-
-supabase:
-  enabled: true
-  url: postgresql://postgres.[YOUR-PROJECT-ID]@aws-0-eu-central-1.pooler.supabase.com:6543/postgres
-  db_password: your-database-password
-  keep_records_limit: 100  # number of records to keep in keep_alive_reserved table
+2. Copy the example configuration:
+```bash
+cp config.example.yaml config.yaml
 ```
 
-3. Build and run
+3. Edit `config.yaml` with your service credentials
+
+4. Build the application:
 ```bash
 go build -o keeper ./cmd/keeper
-./keeper
-```
-
-### GitHub Actions Setup
-
-You can run this keeper automatically using GitHub Actions. This is the recommended way as it:
-- Runs in the cloud (no need for a local server)
-- Keeps sensitive information secure using GitHub Secrets
-- Provides automatic scheduling and execution logs
-
-To set up GitHub Actions:
-
-1. Fork this repository
-
-2. Set up GitHub Secrets
-   Go to your repository's Settings -> Secrets and variables -> Actions and add the following secrets:
-
-   - `MONGODB_ENABLED`: Set to 'true' or 'false'
-   - `MONGODB_URI`: Your MongoDB connection string
-   - `MONGODB_DATABASE`: Your database name
-   - `SUPABASE_ENABLED`: Set to 'true' or 'false'
-   - `SUPABASE_URL`: Your Supabase database URL (PostgreSQL connection string)
-   - `SUPABASE_DB_PASSWORD`: Your Supabase database password
-
-3. The workflow will automatically:
-   - Run every hour
-   - Run on push to main branch
-   - Allow manual triggers via GitHub Actions UI
-
-You can monitor the execution in the Actions tab of your repository.
-
-### Alternative Deployment Options
-
-#### Linux Cron
-```bash
-# Run every hour
-0 * * * * /path/to/keeper
-```
-
-#### Windows Task Scheduler
-```batch
-# Create hourly task
-schtasks /create /tn "ServiceKeeper" /tr "path\to\keeper.exe" /sc hourly
 ```
 
 ## Configuration
 
-- MongoDB configuration:
-  - `enabled`: Whether to activate MongoDB checks
-  - `uri`: MongoDB connection string
-  - `database`: Database name to ping
+The configuration file (`config.yaml`) supports the following options:
 
-- Supabase configuration:
-  - `enabled`: Whether to activate Supabase checks
-  - `url`: Your Supabase database URL (PostgreSQL connection string)
-  - `db_password`: Your Supabase database password
-  - `keep_records_limit`: Number of records to keep in keep_alive_reserved table (default: 100)
+```yaml
+# Global identifier for this keeper instance
+hostname: "local-keeper"
 
-## Security Notes
+mongodb:
+  enabled: false  # Set to true to enable MongoDB keeper
+  uri: "mongodb+srv://<username>:<password>@<cluster>.mongodb.net/?retryWrites=true&w=majority"
+  database: "keeper"  # The database to store keep-alive records
+  keep_records_limit: 100  # Number of records to keep in keep_alive_reserved collection
 
-- Never commit your `config.yaml` file (it's in .gitignore)
-- When using GitHub Actions, always use Secrets for sensitive information
-- The program will clean up the config file after each GitHub Actions run
+supabase:
+  enabled: true  # Set to true to enable Supabase keeper
+  uri: "postgresql://<user>:<password>@<host>:<port>/<dbname>"  # Get this from Supabase connection string
+  keep_records_limit: 100  # Number of records to keep in keep_alive_reserved table
+```
+
+### MongoDB Configuration
+
+1. Get your MongoDB Atlas connection string from the Atlas dashboard
+2. Replace `<username>`, `<password>`, and `<cluster>` with your credentials
+3. Set `enabled: true` to activate the MongoDB keeper
+
+### Supabase Configuration
+
+1. Get your connection string from Supabase dashboard:
+   - Go to Project Settings > Database
+   - Find the Connection String section
+   - Copy the Connection string and replace the password
+2. Set `enabled: true` to activate the Supabase keeper
+
+## Usage
+
+Run the keeper:
+```bash
+./keeper
+```
+
+The keeper will:
+1. Connect to enabled services
+2. Create necessary tables/collections if they don't exist
+3. Periodically ping each service
+4. Maintain a record of pings with cleanup
+
+## Record Structure
+
+### MongoDB Collection: keep_alive_reserved
+```json
+{
+  "ping_timestamp": "2024-03-19T10:00:00Z",
+  "ping_source": "mongodb-keeper",
+  "ping_details": {
+    "hostname": "local-keeper",
+    "version": "1.0"
+  }
+}
+```
+
+### Supabase Table: keep_alive_reserved
+```sql
+CREATE TABLE keep_alive_reserved (
+  id BIGSERIAL PRIMARY KEY,
+  ping_timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  ping_source VARCHAR(255),
+  ping_details JSONB DEFAULT '{}'::jsonb
+);
+```
 
 ## License
 
-MIT License - see LICENSE file for details
+MIT License

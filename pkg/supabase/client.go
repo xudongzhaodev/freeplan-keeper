@@ -10,22 +10,13 @@ import (
 type Client struct {
 	conn            *pgx.Conn
 	keepRecordLimit int
-	hostname        string  // This is the global hostname from config
+	hostname        string  // Global hostname from config
 }
 
 // NewClient creates a new Supabase client using the PostgreSQL connection
-func NewClient(host string, port int, database, username, password string, keepRecordLimit int, hostname string) (*Client, error) {
-	// Construct the connection string with sslmode=require
-	connStr := fmt.Sprintf("postgresql://%s:%s@%s:%d/%s?sslmode=require",
-		username,
-		password,
-		host,  // This is the Supabase host for connection
-		port,
-		database,
-	)
-
+func NewClient(uri string, keepRecordLimit int, hostname string) (*Client, error) {
 	// Create the connection
-	conn, err := pgx.Connect(context.Background(), connStr)
+	conn, err := pgx.Connect(context.Background(), uri)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
@@ -40,7 +31,7 @@ func NewClient(host string, port int, database, username, password string, keepR
 	return &Client{
 		conn:            conn,
 		keepRecordLimit: keepRecordLimit,
-		hostname:        hostname,  // Store the global hostname
+		hostname:        hostname,
 	}, nil
 }
 
