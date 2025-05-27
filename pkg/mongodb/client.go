@@ -2,46 +2,115 @@ package mongodb
 
 import (
 	"context"
+	"fmt"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
 type Client struct {
-	client   *mongo.Client
-	database string
+	client          *mongo.Client
+	db              *mongo.Database
+	keepRecordLimit int
+	hostname        string  // Global hostname from config
 }
 
-func NewClient(uri, database string) (*Client, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+// NewClient creates a new MongoDB client
+func NewClient(uri string, database string, keepRecordLimit int, hostname string) (*Client, error) {
+	// Use the SetServerAPIOptions() method to set the version of the Stable API
+	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
+	opts := options.Client().
+		ApplyURI(uri).
+		SetServerAPIOptions(serverAPI)
 
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri))
+	// Create a new client and connect to the server
+	ctx := context.Background()
+	client, err := mongo.Connect(ctx, opts)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to connect to MongoDB: %w", err)
 	}
 
-	// Verify the connection
+	// Send a ping to confirm a successful connection
 	if err := client.Ping(ctx, readpref.Primary()); err != nil {
-		return nil, err
+		client.Disconnect(ctx)
+		return nil, fmt.Errorf("failed to ping MongoDB: %w", err)
 	}
+
+	// Get database instance
+	db := client.Database(database)
 
 	return &Client{
-		client:   client,
-		database: database,
+		client:          client,
+		db:              db,
+		keepRecordLimit: keepRecordLimit,
+		hostname:        hostname,
 	}, nil
 }
 
+// Ping checks database connectivity and maintains activity by inserting a record
 func (c *Client) Ping() error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	return c.client.Ping(ctx, readpref.Primary())
+	ctx := context.Background()
+
+	// Get or create the keep_alive_reserved collection
+	collection := c.db.Collection("keep_alive_reserved")
+
+	// Create indexes if they don't exist
+	_, err := collection.Indexes().CreateOne(ctx, mongo.IndexModel{
+		Keys: bson.D{{Key: "ping_timestamp", Value: -1}}, // Descending index on ping_timestamp
+	})
+	if err != nil {
+		return fmt.Errorf("failed to create index: %w", err)
+	}
+
+	// Insert a new record
+	record := bson.M{
+		"ping_timestamp": time.Now(),
+		"ping_source":    "mongodb-keeper",
+		"ping_details": bson.M{
+			"hostname": c.hostname,
+			"version":  "1.0",
+		},
+	}
+
+	if _, err := collection.InsertOne(ctx, record); err != nil {
+		return fmt.Errorf("failed to insert keep-alive record: %w", err)
+	}
+
+	// Clean up old records based on configured limit
+	// First, find the timestamp of the Nth record (where N is the keep_record_limit)
+	var cutoffDoc struct {
+		PingTimestamp time.Time `bson:"ping_timestamp"`
+	}
+	opts := options.FindOne().SetSort(bson.D{{Key: "ping_timestamp", Value: -1}}).SetSkip(int64(c.keepRecordLimit))
+	err = collection.FindOne(ctx, bson.M{}, opts).Decode(&cutoffDoc)
+	
+	if err != nil && err != mongo.ErrNoDocuments {
+		// Log the error but don't fail the ping
+		fmt.Printf("Warning: failed to find cutoff timestamp: %v\n", err)
+		return nil
+	}
+
+	if err != mongo.ErrNoDocuments {
+		// Delete records older than the cutoff timestamp
+		_, err = collection.DeleteMany(ctx, bson.M{
+			"ping_timestamp": bson.M{"$lt": cutoffDoc.PingTimestamp},
+		})
+		if err != nil {
+			// Log the error but don't fail the ping
+			fmt.Printf("Warning: failed to cleanup old records: %v\n", err)
+		}
+	}
+
+	return nil
 }
 
+// Close closes the database connection
 func (c *Client) Close() error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	return c.client.Disconnect(ctx)
+	if c.client != nil {
+		return c.client.Disconnect(context.Background())
+	}
+	return nil
 } 

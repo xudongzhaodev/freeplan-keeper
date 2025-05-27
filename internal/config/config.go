@@ -11,9 +11,10 @@ import (
 type Config struct {
 	Hostname string `yaml:"hostname"`  // Global identifier for this keeper instance
 	MongoDB struct {
-		Enabled  bool   `yaml:"enabled"`
-		URI      string `yaml:"uri"`
-		Database string `yaml:"database"`
+		Enabled         bool   `yaml:"enabled"`
+		URI            string `yaml:"uri"`
+		Database       string `yaml:"database"`
+		KeepRecordLimit int    `yaml:"keep_records_limit"`
 	} `yaml:"mongodb"`
 	
 	Supabase struct {
@@ -47,6 +48,9 @@ func Load() (*Config, error) {
 	// Set default values
 	if cfg.Hostname == "" {
 		cfg.Hostname = "freeplan-keeper" // default hostname identifier
+	}
+	if cfg.MongoDB.KeepRecordLimit <= 0 {
+		cfg.MongoDB.KeepRecordLimit = 100 // default to keeping 100 records
 	}
 	if cfg.Supabase.KeepRecordLimit <= 0 {
 		cfg.Supabase.KeepRecordLimit = 100 // default to keeping 100 records
