@@ -14,14 +14,15 @@ type Keeper struct {
 
 // NewKeeper creates a new Supabase keeper instance
 func NewKeeper(cfg *config.Config) (*Keeper, error) {
-	if !cfg.Supabase.Enabled {
+	// Skip if Supabase configuration is missing or disabled
+	if cfg.Supabase == nil || !cfg.Supabase.Enabled {
 		return nil, nil
 	}
 
 	client, err := supabase.NewClient(
 		cfg.Supabase.URI,
 		cfg.Supabase.KeepRecordLimit,
-		cfg.Hostname,
+		cfg.Hostname,  // Pass the global hostname
 	)
 	if err != nil {
 		return nil, err

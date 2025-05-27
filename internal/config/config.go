@@ -7,21 +7,26 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// MongoDBConfig holds MongoDB specific configuration
+type MongoDBConfig struct {
+	Enabled         bool   `yaml:"enabled"`
+	URI            string `yaml:"uri"`
+	Database       string `yaml:"database"`
+	KeepRecordLimit int    `yaml:"keep_records_limit"`
+}
+
+// SupabaseConfig holds Supabase specific configuration
+type SupabaseConfig struct {
+	Enabled         bool   `yaml:"enabled"`
+	URI            string `yaml:"uri"`
+	KeepRecordLimit int    `yaml:"keep_records_limit"`
+}
+
 // Config holds all configuration settings for the application
 type Config struct {
-	Hostname string `yaml:"hostname"`  // Global identifier for this keeper instance
-	MongoDB struct {
-		Enabled         bool   `yaml:"enabled"`
-		URI            string `yaml:"uri"`
-		Database       string `yaml:"database"`
-		KeepRecordLimit int    `yaml:"keep_records_limit"`
-	} `yaml:"mongodb"`
-	
-	Supabase struct {
-		Enabled         bool   `yaml:"enabled"`
-		URI            string `yaml:"uri"`
-		KeepRecordLimit int    `yaml:"keep_records_limit"`
-	} `yaml:"supabase"`
+	Hostname string         `yaml:"hostname"`  // Global identifier for this keeper instance
+	MongoDB  *MongoDBConfig `yaml:"mongodb,omitempty"`  // Optional MongoDB configuration
+	Supabase *SupabaseConfig `yaml:"supabase,omitempty"`  // Optional Supabase configuration
 }
 
 // Load reads and parses the configuration file
@@ -45,26 +50,33 @@ func Load() (*Config, error) {
 	if cfg.Hostname == "" {
 		cfg.Hostname = "freeplan-keeper" // default hostname identifier
 	}
-	if cfg.MongoDB.KeepRecordLimit <= 0 {
-		cfg.MongoDB.KeepRecordLimit = 100 // default to keeping 100 records
-	}
-	if cfg.Supabase.KeepRecordLimit <= 0 {
-		cfg.Supabase.KeepRecordLimit = 100 // default to keeping 100 records
+
+	// Initialize MongoDB config with defaults if it exists
+	if cfg.MongoDB != nil {
+		if cfg.MongoDB.KeepRecordLimit <= 0 {
+			cfg.MongoDB.KeepRecordLimit = 100
+		}
+		// Validate required fields only if MongoDB is enabled
+		if cfg.MongoDB.Enabled {
+			if cfg.MongoDB.URI == "" {
+				return nil, fmt.Errorf("mongodb.uri is required when mongodb is enabled")
+			}
+			if cfg.MongoDB.Database == "" {
+				return nil, fmt.Errorf("mongodb.database is required when mongodb is enabled")
+			}
+		}
 	}
 
-	// Validate required fields for enabled services
-	if cfg.MongoDB.Enabled {
-		if cfg.MongoDB.URI == "" {
-			return nil, fmt.Errorf("mongodb.uri is required when mongodb is enabled")
+	// Initialize Supabase config with defaults if it exists
+	if cfg.Supabase != nil {
+		if cfg.Supabase.KeepRecordLimit <= 0 {
+			cfg.Supabase.KeepRecordLimit = 100
 		}
-		if cfg.MongoDB.Database == "" {
-			return nil, fmt.Errorf("mongodb.database is required when mongodb is enabled")
-		}
-	}
-
-	if cfg.Supabase.Enabled {
-		if cfg.Supabase.URI == "" {
-			return nil, fmt.Errorf("supabase.uri is required when supabase is enabled")
+		// Validate required fields only if Supabase is enabled
+		if cfg.Supabase.Enabled {
+			if cfg.Supabase.URI == "" {
+				return nil, fmt.Errorf("supabase.uri is required when supabase is enabled")
+			}
 		}
 	}
 

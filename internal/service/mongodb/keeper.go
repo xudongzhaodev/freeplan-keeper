@@ -14,7 +14,8 @@ type Keeper struct {
 
 // NewKeeper creates a new MongoDB keeper instance
 func NewKeeper(cfg *config.Config) (*Keeper, error) {
-	if !cfg.MongoDB.Enabled {
+	// Skip if MongoDB configuration is missing or disabled
+	if cfg.MongoDB == nil || !cfg.MongoDB.Enabled {
 		return nil, nil
 	}
 
