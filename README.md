@@ -32,6 +32,18 @@ cp config.example.yaml config.yaml
 go build -o keeper ./cmd/keeper
 ```
 
+## Branch Management
+
+The project follows a two-branch strategy:
+
+- `main`: Protected branch that contains production-ready code. All GitHub Actions workflows run on this branch.
+- `dev`: Development branch where all new features and fixes are implemented.
+
+Development workflow:
+1. All new development work happens on the `dev` branch
+2. Once changes are tested and ready, they are merged into `main` via pull requests
+3. GitHub Actions automatically run tests and deployments on the `main` branch
+
 ## Configuration
 
 The configuration file (`config.yaml`) supports the following options:
