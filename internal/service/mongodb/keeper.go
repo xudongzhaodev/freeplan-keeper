@@ -23,7 +23,7 @@ func NewKeeper(cfg *config.Config) (*Keeper, error) {
 		cfg.MongoDB.URI,
 		cfg.MongoDB.Database,
 		cfg.MongoDB.KeepRecordLimit,
-		cfg.Hostname,  // Pass the global hostname
+		cfg.Hostname, // Pass the global hostname
 	)
 	if err != nil {
 		return nil, err
@@ -57,4 +57,4 @@ func (k *Keeper) Ping() error {
 		return nil
 	}
 	return k.client.Ping()
-} 
+}

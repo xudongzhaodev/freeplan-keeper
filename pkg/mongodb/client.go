@@ -15,7 +15,7 @@ type Client struct {
 	client          *mongo.Client
 	db              *mongo.Database
 	keepRecordLimit int
-	hostname        string  // Global hostname from config
+	hostname        string // Global hostname from config
 }
 
 // NewClient creates a new MongoDB client
@@ -86,7 +86,7 @@ func (c *Client) Ping() error {
 	}
 	opts := options.FindOne().SetSort(bson.D{{Key: "ping_timestamp", Value: -1}}).SetSkip(int64(c.keepRecordLimit))
 	err = collection.FindOne(ctx, bson.M{}, opts).Decode(&cutoffDoc)
-	
+
 	if err != nil && err != mongo.ErrNoDocuments {
 		// Log the error but don't fail the ping
 		fmt.Printf("Warning: failed to find cutoff timestamp: %v\n", err)
@@ -113,4 +113,4 @@ func (c *Client) Close() error {
 		return c.client.Disconnect(context.Background())
 	}
 	return nil
-} 
+}

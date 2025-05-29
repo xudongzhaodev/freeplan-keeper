@@ -10,7 +10,7 @@ import (
 type Client struct {
 	conn            *pgx.Conn
 	keepRecordLimit int
-	hostname        string  // Global hostname from config
+	hostname        string // Global hostname from config
 }
 
 // NewClient creates a new Supabase client using the PostgreSQL connection
@@ -58,7 +58,7 @@ func (c *Client) Ping() error {
 	VALUES ($1, $2::jsonb)`
 
 	details := fmt.Sprintf(`{"hostname": "%s", "version": "1.0"}`, c.hostname)
-	
+
 	if _, err := c.conn.Exec(ctx, insertSQL, "supabase-keeper", details); err != nil {
 		return fmt.Errorf("failed to insert keep-alive record: %w", err)
 	}
@@ -86,4 +86,4 @@ func (c *Client) Close() error {
 		return c.conn.Close(context.Background())
 	}
 	return nil
-} 
+}
