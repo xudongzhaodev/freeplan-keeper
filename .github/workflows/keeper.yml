@@ -35,13 +35,13 @@ jobs:
         hostname: "github-action-keeper"
 
         mongodb:
-          enabled: ${{ secrets.MONGODB_ENABLED == 'true' }}
+          enabled: true
           uri: ${{ secrets.MONGODB_URI }}
           database: ${{ secrets.MONGODB_DATABASE }}
           keep_records_limit: 100
 
         supabase:
-          enabled: ${{ secrets.SUPABASE_ENABLED == 'true' }}
+          enabled: true
           uri: ${{ secrets.SUPABASE_URI }}
           keep_records_limit: 100
         EOF
