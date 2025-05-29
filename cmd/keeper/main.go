@@ -20,21 +20,31 @@ func main() {
 	manager := service.NewManager()
 
 	// Initialize MongoDB keeper if enabled
-	if cfg.MongoDB.Enabled {
+	if cfg.MongoDB != nil && cfg.MongoDB.Enabled {
 		mongoKeeper, err := mongodb.NewKeeper(cfg)
 		if err != nil {
-			log.Fatalf("Failed to create MongoDB keeper: %v", err)
+			log.Printf("Warning: Failed to create MongoDB keeper: %v", err)
+		} else if mongoKeeper != nil {
+			manager.RegisterKeeper(mongoKeeper)
+			log.Printf("MongoDB keeper registered successfully")
 		}
-		manager.RegisterKeeper(mongoKeeper)
 	}
 
 	// Initialize Supabase keeper if enabled
-	if cfg.Supabase.Enabled {
+	if cfg.Supabase != nil && cfg.Supabase.Enabled {
 		supabaseKeeper, err := supabase.NewKeeper(cfg)
 		if err != nil {
-			log.Fatalf("Failed to create Supabase keeper: %v", err)
+			log.Printf("Warning: Failed to create Supabase keeper: %v", err)
+		} else if supabaseKeeper != nil {
+			manager.RegisterKeeper(supabaseKeeper)
+			log.Printf("Supabase keeper registered successfully")
 		}
-		manager.RegisterKeeper(supabaseKeeper)
+	}
+
+	// Check if any keepers were registered
+	if manager.IsEmpty() {
+		log.Printf("Warning: No keepers were successfully initialized")
+		return
 	}
 
 	// Run checks once

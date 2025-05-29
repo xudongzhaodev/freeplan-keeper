@@ -41,6 +41,11 @@ func (m *Manager) RunOnce(ctx context.Context) error {
 	return nil
 }
 
+// IsEmpty returns true if no keepers are registered
+func (m *Manager) IsEmpty() bool {
+	return len(m.keepers) == 0
+}
+
 // Stop gracefully shuts down all keepers
 func (m *Manager) Stop() {
 	for _, keeper := range m.keepers {
