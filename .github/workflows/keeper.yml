@@ -2,7 +2,7 @@ name: Service Keeper
 
 on:
   schedule:
-    - cron: '0 */1 * * *'  # Run every hour
+    - cron: '0 3 * * *'  # Run at 3:00 UTC daily (5:00 CEST, 22:00 EST previous day)
   workflow_dispatch:        # Allow manual trigger
   push:
     branches: [ main ]      # Run on push to main branch
