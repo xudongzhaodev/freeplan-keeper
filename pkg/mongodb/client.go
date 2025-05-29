@@ -3,12 +3,14 @@ package mongodb
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Client struct {
@@ -65,14 +67,24 @@ func (c *Client) Ping() error {
 		return fmt.Errorf("failed to create index: %w", err)
 	}
 
+	// Drop the problematic id index if it exists
+	_, err = collection.Indexes().DropOne(ctx, "id_1")
+	if err != nil {
+		// Ignore if index doesn't exist, log other errors
+		if !strings.Contains(err.Error(), "index not found") {
+			fmt.Printf("Warning: failed to drop id index: %v\n", err)
+		}
+	}
+
 	// Insert a new record
-	record := bson.M{
-		"ping_timestamp": time.Now(),
-		"ping_source":    "mongodb-keeper",
-		"ping_details": bson.M{
-			"hostname": c.hostname,
-			"version":  "1.0",
-		},
+	record := bson.D{
+		{Key: "_id", Value: primitive.NewObjectID()},
+		{Key: "ping_timestamp", Value: time.Now()},
+		{Key: "ping_source", Value: "mongodb-keeper"},
+		{Key: "ping_details", Value: bson.D{
+			{Key: "hostname", Value: c.hostname},
+			{Key: "version", Value: "1.0"},
+		}},
 	}
 
 	if _, err := collection.InsertOne(ctx, record); err != nil {
