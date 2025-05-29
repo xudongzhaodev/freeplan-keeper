@@ -22,7 +22,7 @@ func NewKeeper(cfg *config.Config) (*Keeper, error) {
 	client, err := supabase.NewClient(
 		cfg.Supabase.URI,
 		cfg.Supabase.KeepRecordLimit,
-		cfg.Hostname,  // Pass the global hostname
+		cfg.Hostname, // Pass the global hostname
 	)
 	if err != nil {
 		return nil, err
@@ -56,4 +56,4 @@ func (k *Keeper) Ping() error {
 		return nil
 	}
 	return k.client.Ping()
-} 
+}

@@ -32,6 +32,11 @@ cp config.example.yaml config.yaml
 go build -o keeper ./cmd/keeper
 ```
 
+5. Format code (optional):
+```bash
+go fmt ./...  # Format all Go files in the project
+```
+
 ## Branch Management
 
 The project follows a two-branch strategy:

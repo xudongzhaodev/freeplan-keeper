@@ -48,4 +48,4 @@ func (m *Manager) Stop() {
 			log.Printf("[%s] Error stopping keeper: %v", keeper.Name(), err)
 		}
 	}
-} 
+}

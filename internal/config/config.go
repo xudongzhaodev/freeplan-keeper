@@ -10,23 +10,23 @@ import (
 // MongoDBConfig holds MongoDB specific configuration
 type MongoDBConfig struct {
 	Enabled         bool   `yaml:"enabled"`
-	URI            string `yaml:"uri"`
-	Database       string `yaml:"database"`
+	URI             string `yaml:"uri"`
+	Database        string `yaml:"database"`
 	KeepRecordLimit int    `yaml:"keep_records_limit"`
 }
 
 // SupabaseConfig holds Supabase specific configuration
 type SupabaseConfig struct {
 	Enabled         bool   `yaml:"enabled"`
-	URI            string `yaml:"uri"`
+	URI             string `yaml:"uri"`
 	KeepRecordLimit int    `yaml:"keep_records_limit"`
 }
 
 // Config holds all configuration settings for the application
 type Config struct {
-	Hostname string         `yaml:"hostname"`  // Global identifier for this keeper instance
-	MongoDB  *MongoDBConfig `yaml:"mongodb,omitempty"`  // Optional MongoDB configuration
-	Supabase *SupabaseConfig `yaml:"supabase,omitempty"`  // Optional Supabase configuration
+	Hostname string          `yaml:"hostname"`           // Global identifier for this keeper instance
+	MongoDB  *MongoDBConfig  `yaml:"mongodb,omitempty"`  // Optional MongoDB configuration
+	Supabase *SupabaseConfig `yaml:"supabase,omitempty"` // Optional Supabase configuration
 }
 
 // Load reads and parses the configuration file
@@ -81,4 +81,4 @@ func Load() (*Config, error) {
 	}
 
 	return &cfg, nil
-} 
+}

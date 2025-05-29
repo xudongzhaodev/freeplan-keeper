@@ -31,14 +31,19 @@ jobs:
     - name: Generate config from secrets
       run: |
         cat > config.yaml << EOF
+        # Global identifier for this keeper instance
+        hostname: "github-action-keeper"
+
         mongodb:
           enabled: ${{ secrets.MONGODB_ENABLED == 'true' }}
           uri: ${{ secrets.MONGODB_URI }}
           database: ${{ secrets.MONGODB_DATABASE }}
+          keep_records_limit: 100
+
         supabase:
           enabled: ${{ secrets.SUPABASE_ENABLED == 'true' }}
-          url: ${{ secrets.SUPABASE_URL }}
-          api_key: ${{ secrets.SUPABASE_API_KEY }}
+          uri: ${{ secrets.SUPABASE_URI }}
+          keep_records_limit: 100
         EOF
       
     - name: Run keeper
