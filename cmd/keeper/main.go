@@ -6,6 +6,7 @@ import (
 
 	"github.com/xudongzhaodev/freeplan-keeper/internal/config"
 	"github.com/xudongzhaodev/freeplan-keeper/internal/service"
+	"github.com/xudongzhaodev/freeplan-keeper/internal/service/cloudamqp"
 	"github.com/xudongzhaodev/freeplan-keeper/internal/service/mongodb"
 	"github.com/xudongzhaodev/freeplan-keeper/internal/service/supabase"
 )
@@ -38,6 +39,17 @@ func main() {
 		} else if supabaseKeeper != nil {
 			manager.RegisterKeeper(supabaseKeeper)
 			log.Printf("Supabase keeper registered successfully")
+		}
+	}
+
+	// Initialize CloudAMQP keeper if enabled
+	if cfg.CloudAMQP != nil && cfg.CloudAMQP.Enabled {
+		cloudamqpKeeper, err := cloudamqp.NewKeeper(cfg)
+		if err != nil {
+			log.Printf("Warning: Failed to create CloudAMQP keeper: %v", err)
+		} else if cloudamqpKeeper != nil {
+			manager.RegisterKeeper(cloudamqpKeeper)
+			log.Printf("CloudAMQP keeper registered successfully")
 		}
 	}
 
