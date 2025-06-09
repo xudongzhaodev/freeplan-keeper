@@ -44,6 +44,11 @@ jobs:
           enabled: true
           uri: ${{ secrets.SUPABASE_URI }}
           keep_records_limit: 100
+
+        cloudamqp:
+          enabled: true
+          uri: ${{ secrets.CLOUDAMQP_URI }}
+          queue: ${{ secrets.CLOUDAMQP_QUEUE }}
         EOF
       
     - name: Run keeper

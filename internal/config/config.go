@@ -22,11 +22,19 @@ type SupabaseConfig struct {
 	KeepRecordLimit int    `yaml:"keep_records_limit"`
 }
 
+// CloudAMQPConfig holds CloudAMQP specific configuration
+type CloudAMQPConfig struct {
+	Enabled bool   `yaml:"enabled"`
+	URI     string `yaml:"uri"`
+	Queue   string `yaml:"queue"` // Queue name for keep-alive messages
+}
+
 // Config holds all configuration settings for the application
 type Config struct {
-	Hostname string          `yaml:"hostname"`           // Global identifier for this keeper instance
-	MongoDB  *MongoDBConfig  `yaml:"mongodb,omitempty"`  // Optional MongoDB configuration
-	Supabase *SupabaseConfig `yaml:"supabase,omitempty"` // Optional Supabase configuration
+	Hostname  string           `yaml:"hostname"`            // Global identifier for this keeper instance
+	MongoDB   *MongoDBConfig   `yaml:"mongodb,omitempty"`  // Optional MongoDB configuration
+	Supabase  *SupabaseConfig  `yaml:"supabase,omitempty"` // Optional Supabase configuration
+	CloudAMQP *CloudAMQPConfig `yaml:"cloudamqp,omitempty"` // Optional CloudAMQP configuration
 }
 
 // Load reads and parses the configuration file
@@ -76,6 +84,19 @@ func Load() (*Config, error) {
 		if cfg.Supabase.Enabled {
 			if cfg.Supabase.URI == "" {
 				return nil, fmt.Errorf("supabase.uri is required when supabase is enabled")
+			}
+		}
+	}
+
+	// Initialize CloudAMQP config with defaults if it exists
+	if cfg.CloudAMQP != nil {
+		// Validate required fields only if CloudAMQP is enabled
+		if cfg.CloudAMQP.Enabled {
+			if cfg.CloudAMQP.URI == "" {
+				return nil, fmt.Errorf("cloudamqp.uri is required when cloudamqp is enabled")
+			}
+			if cfg.CloudAMQP.Queue == "" {
+				cfg.CloudAMQP.Queue = "keep_alive" // default queue name
 			}
 		}
 	}

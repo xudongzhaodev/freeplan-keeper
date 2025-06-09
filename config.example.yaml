@@ -12,4 +12,10 @@ mongodb:
 supabase:
   enabled: true  # Set to true to enable Supabase keeper
   uri: "postgresql://<user>:<password>@<host>:<port>/<dbname>"  # Get this from Supabase connection string
-  keep_records_limit: 100  # Number of records to keep in keep_alive_reserved table 
+  keep_records_limit: 100  # Number of records to keep in keep_alive_reserved table
+
+# CloudAMQP configuration (optional, remove entire section if not needed)
+cloudamqp:
+  enabled: false  # Set to true to enable CloudAMQP keeper
+  uri: "amqp://<username>:<password>@<host>:<port>/<vhost>"  # Get this from CloudAMQP instance details
+  queue: "keep_alive"  # Queue name for keep-alive messages 
